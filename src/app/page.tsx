@@ -1,10 +1,11 @@
 import { ImageCanvas } from '@/components/ImageCanvas'
-import Image from 'next/image'
 
 export default function Home() {
   return (
-    <div className=' min-h-screen p-8 pb-20 gap-16 sm:p-20'>
-      <ImageCanvas />
+    <div className='min-h-screen bg-gradient-to-br from-neutral-800 to-neutral-900'>
+      <div className='container mx-auto px-4 py-6 sm:py-8 lg:py-12'>
+        <ImageCanvas />
+      </div>
     </div>
   )
 }
