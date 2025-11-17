@@ -3,35 +3,44 @@
 import { getPixelColor } from '@/utils/getPixelColor'
 import React, { useMemo, useRef } from 'react'
 
-const TOTAL_ROWS = 26
-const TOTAL_COLS = 19
-const PIXELS_PER_ROW = 57
-
 export const ImageCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [pixelData, setPixelData] = React.useState<number[]>([])
   const [currentFaceIndex, setCurrentFaceIndex] = React.useState<number>(0)
   const [patternScale, setPatternScale] = React.useState<number>(100)
+  const [imageWidth, setImageWidth] = React.useState<number>(57)
+  const [imageHeight, setImageHeight] = React.useState<number>(78)
+
+  const totalCubes = useMemo(() => {
+    const cols = Math.floor(imageWidth / 3)
+    const rows = Math.floor(imageHeight / 3)
+    return cols * rows
+  }, [imageWidth, imageHeight])
 
   const activePixels = useMemo(() => {
-    const rowIndex = TOTAL_ROWS - 1 - Math.floor(currentFaceIndex / TOTAL_COLS)
-    const colIndex = currentFaceIndex % TOTAL_COLS
+    const cols = Math.floor(imageWidth / 3)
+    const rows = Math.floor(imageHeight / 3)
 
-    const startIndex = rowIndex * 3 * PIXELS_PER_ROW + colIndex * 3
+    const rowIndex = rows - 1 - Math.floor(currentFaceIndex / cols)
+    const colIndex = currentFaceIndex % cols
+
+    const startIndex = rowIndex * 3 * imageWidth + colIndex * 3
 
     return [
       startIndex,
       startIndex + 1,
       startIndex + 2,
-      startIndex + 57,
-      startIndex + 58,
-      startIndex + 59,
-      startIndex + 114,
-      startIndex + 115,
-      startIndex + 116,
+      startIndex + imageWidth,
+      startIndex + imageWidth + 1,
+      startIndex + imageWidth + 2,
+      startIndex + imageWidth * 2,
+      startIndex + imageWidth * 2 + 1,
+      startIndex + imageWidth * 2 + 2,
     ]
-  }, [currentFaceIndex])
+  }, [currentFaceIndex, imageWidth, imageHeight])
+
+  const activePixelsSet = useMemo(() => new Set(activePixels), [activePixels])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -48,9 +57,12 @@ export const ImageCanvas: React.FC = () => {
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        // Optionally resize canvas to match image dimensions
+        // Use actual image dimensions
         canvas.width = img.width
         canvas.height = img.height
+
+        setImageWidth(img.width)
+        setImageHeight(img.height)
 
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.drawImage(img, 0, 0)
@@ -162,12 +174,12 @@ export const ImageCanvas: React.FC = () => {
                 <div
                   className='grid gap-[1px]'
                   style={{
-                    gridTemplateColumns: 'repeat(57, 1fr)',
-                    gridTemplateRows: 'repeat(78, 1fr)',
+                    gridTemplateColumns: `repeat(${imageWidth}, 1fr)`,
+                    gridTemplateRows: `repeat(${imageHeight}, 1fr)`,
                     width: `min(${patternScale}%, ${
-                      (570 * patternScale) / 100
+                      (imageWidth * 10 * patternScale) / 100
                     }px)`,
-                    aspectRatio: '57 / 78',
+                    aspectRatio: `${imageWidth} / ${imageHeight}`,
                   }}
                 >
                   {pixelData.map((color, i) => (
@@ -186,7 +198,7 @@ export const ImageCanvas: React.FC = () => {
                           ? 'bg-yellow-400'
                           : 'bg-orange-500'
                       } ${
-                        activePixels.includes(i)
+                        activePixelsSet.has(i)
                           ? 'opacity-100 ring-1 ring-inset ring-cyan-400'
                           : 'opacity-40'
                       }`}
@@ -208,7 +220,7 @@ export const ImageCanvas: React.FC = () => {
                   {currentFaceIndex + 1}
                   <span className='text-base sm:text-lg font-normal text-gray-400'>
                     {' '}
-                    / {TOTAL_ROWS * TOTAL_COLS}
+                    / {totalCubes}
                   </span>
                 </p>
               </div>
@@ -249,10 +261,10 @@ export const ImageCanvas: React.FC = () => {
                 <button
                   onClick={() =>
                     setCurrentFaceIndex(prev =>
-                      Math.min(prev + 1, TOTAL_ROWS * TOTAL_COLS - 1)
+                      Math.min(prev + 1, totalCubes - 1)
                     )
                   }
-                  disabled={currentFaceIndex === TOTAL_ROWS * TOTAL_COLS - 1}
+                  disabled={currentFaceIndex === totalCubes - 1}
                   className='w-full px-4 py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 disabled:bg-zinc-900 disabled:cursor-not-allowed transition-colors'
                 >
                   Next →
